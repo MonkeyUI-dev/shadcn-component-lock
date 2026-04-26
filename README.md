@@ -32,7 +32,7 @@ This skill follows the [agentskills.io](https://agentskills.io/specification) sp
 
 ```bash
 # Claude Code / generic skills location
-git clone https://github.com/<you>/shadcn-component-lock ~/.agents/skills/shadcn-component-lock
+git clone https://github.com/MonkeyUI-dev/shadcn-component-lock ~/.agents/skills/shadcn-component-lock
 
 # or via the skills CLI
 npx skills add <owner>/shadcn-component-lock

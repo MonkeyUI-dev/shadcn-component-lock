@@ -32,7 +32,7 @@ Lockfile 紧挨着它锁定的 primitives —— 任何 agent 在列出 `compone
 
 ```bash
 # Claude Code / 通用 skills 目录
-git clone https://github.com/<you>/shadcn-component-lock ~/.agents/skills/shadcn-component-lock
+git clone https://github.com/MonkeyUI-dev/shadcn-component-lock ~/.agents/skills/shadcn-component-lock
 
 # 或通过 skills CLI
 npx skills add <owner>/shadcn-component-lock
