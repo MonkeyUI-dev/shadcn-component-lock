@@ -35,7 +35,7 @@ Lockfile 紧挨着它锁定的 primitives —— 任何 agent 在列出 `compone
 git clone https://github.com/MonkeyUI-dev/shadcn-component-lock ~/.agents/skills/shadcn-component-lock
 
 # 或通过 skills CLI
-npx skills add <owner>/shadcn-component-lock
+npx skills add MonkeyUI-dev/shadcn-component-lock
 ```
 
 ## 使用

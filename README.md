@@ -35,7 +35,7 @@ This skill follows the [agentskills.io](https://agentskills.io/specification) sp
 git clone https://github.com/MonkeyUI-dev/shadcn-component-lock ~/.agents/skills/shadcn-component-lock
 
 # or via the skills CLI
-npx skills add <owner>/shadcn-component-lock
+npx skills add MonkeyUI-dev/shadcn-component-lock
 ```
 
 ## Use
