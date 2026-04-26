@@ -1,58 +1,58 @@
 # shadcn-component-lock
 
+> Tell every coding agent which files in `components/ui/` are stock [shadcn/ui](https://ui.shadcn.com/docs/components) primitives — and must not be edited in place.
+
 > 中文版:[README.zh-CN.md](README.zh-CN.md)
 
-> An [Agent Skill](https://agentskills.io/) that generates and maintains a `shadcn-component-lock.md` file **inside your project's shadcn UI directory** — telling every Vibe Coding agent (Cursor, GitHub Copilot, Codex, Claude Code, Cline, Roo, Windsurf…) which sibling files are stock [shadcn/ui](https://ui.shadcn.com/docs/components) primitives and **must not be edited in place**. It also keeps a managed pointer section in your project's `AGENTS.md`.
+## Why
+
+Vibe Coding agents (Cursor, GitHub Copilot, Codex, Claude Code, Cline, Roo, Windsurf…) love editing files in `components/ui/`. Because shadcn/ui copies source files directly into your repo, agents treat them as ordinary project code — they see a local file, have no way to know it came from shadcn, and reach for the quickest fix: edit it in place. The moment they patch a stock shadcn primitive in place, that change silently propagates through every component in your app that depends on it — you've just altered global UI behavior without realising it, and made clean upgrades impossible on top of that. This skill drops a lockfile **right next to the primitives** so any agent listing the folder sees the rule before it touches the code.
 
 It pairs with the official [`shadcn` skill](https://github.com/shadcn-ui/ui/tree/main/skills/shadcn): that one **adds & updates** components, this one **records & locks** them.
 
-## What it produces
+## Quick start
 
-Two files, both auto-located from `npx shadcn@latest info --json` (never hardcoded):
-
-```
-<resolvedPaths.ui>/shadcn-component-lock.md   # e.g. components/ui/shadcn-component-lock.md
-AGENTS.md                                     # at the project root, with a managed section
-```
-
-The lockfile lives **next to the primitives it locks**, so any agent that lists `components/ui/` sees it immediately. The `AGENTS.md` section is delimited by `<!-- shadcn-component-lock:pointer -->`, so re-runs replace just that block and never touch the rest of your agent rules.
-
-It contains:
-
-- A YAML metadata block (`style`, `base`, tailwind version, icon library, …) read straight from `npx shadcn@latest info --json`.
-- A grep-friendly `MUST NOT be edited in place` banner addressed to coding agents.
-- A table of every locked primitive with file path + link to the official doc page.
-- A short "how to change a primitive safely" cheatsheet (wrapper → variant → smart-merge).
-
-See [references/LOCK_FORMAT.md](references/LOCK_FORMAT.md) for the exact schema.
-
-## Install
-
-This skill follows the [agentskills.io](https://agentskills.io/specification) spec — a folder with a `SKILL.md`. Drop it into wherever your agent looks for skills, for example:
+Install the skill (folder + `SKILL.md`, per the [agentskills.io](https://agentskills.io/specification) spec):
 
 ```bash
-# Claude Code / generic skills location
 git clone https://github.com/MonkeyUI-dev/shadcn-component-lock ~/.agents/skills/shadcn-component-lock
-
-# or via the skills CLI
+# or
 npx skills add MonkeyUI-dev/shadcn-component-lock
 ```
 
-## Use
-
-Once installed, just say one of these to your agent:
+Then, from your project, just say:
 
 - "Generate the shadcn component lock."
 - "Refresh the shadcn lockfile — I just added a few components."
 - "Which UI components are stock shadcn?"
 
-…or run the script directly from your project root:
+Or run the script directly:
 
 ```bash
 node /path/to/shadcn-component-lock/scripts/generate-lock.mjs
 ```
 
-Useful flags:
+## What you get
+
+Two files, both auto-located via `npx shadcn@latest info --json` (never hardcoded):
+
+```
+<resolvedPaths.ui>/shadcn-component-lock.md   # e.g. components/ui/shadcn-component-lock.md
+AGENTS.md                                     # project root, with a managed section
+```
+
+The `AGENTS.md` block is wrapped in `<!-- shadcn-component-lock:pointer -->`, so re-runs replace just that section and never touch the rest of your agent rules.
+
+The lockfile contains:
+
+- A YAML metadata block (`style`, `base`, Tailwind version, icon library…) read straight from `npx shadcn@latest info --json`.
+- A grep-friendly `MUST NOT be edited in place` banner addressed to coding agents.
+- A table of every locked primitive with file path + link to the official doc page.
+- A short "how to change a primitive safely" cheatsheet (wrapper → variant → smart-merge).
+
+Exact schema: [references/LOCK_FORMAT.md](references/LOCK_FORMAT.md).
+
+## CLI flags
 
 | Flag | Purpose |
 | ---- | ------- |
@@ -63,9 +63,9 @@ Useful flags:
 | `--dry-run` | Print the file to stdout instead of writing. |
 | `--no-agents` | Skip the `AGENTS.md` update. |
 
-## Updates
+## When it runs
 
-- **Passive** — the skill activates automatically after `npx shadcn@latest add/init/apply` and refreshes the lockfile.
+- **Passive** — activates automatically after `npx shadcn@latest add/init/apply` and refreshes the lockfile.
 - **Active** — say "regenerate the shadcn lock" any time and the skill re-runs.
 - **CI** — add `node scripts/generate-lock.mjs --check` to your pipeline to fail builds when the lock has drifted.
 
@@ -79,6 +79,10 @@ Useful flags:
 | Tell other agents not to edit them | **this skill** (via the lockfile) |
 
 This skill never duplicates a CLI call the official skill already owns — it always goes through `npx shadcn@latest info --json`.
+
+## Feedback
+
+This is an MVP — real-world usage reports are the most valuable thing right now. Please [open an issue](https://github.com/MonkeyUI-dev/shadcn-component-lock/issues/new) for bugs, missing flags, or workflows we haven't covered.
 
 ## License
 
