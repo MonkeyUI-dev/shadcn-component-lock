@@ -86,5 +86,5 @@ The files under `components/ui/` are stock [shadcn/ui](https://ui.shadcn.com/doc
 **Do NOT edit them in place.** Read [`components/ui/shadcn-component-lock.md`](components/ui/shadcn-component-lock.md) for the full list and the safe ways to change a primitive
 (wrapper component → `cva` variant → `npx shadcn@latest add <component> --diff` smart-merge).
 
-_This section is maintained by the [`shadcn-component-lock`](https://agentskills.io/) skill — re-run `node scripts/generate-lock.mjs` to refresh._
+_This section is maintained by the `shadcn-component-lock` skill — re-run `node scripts/generate-lock.mjs` to refresh._
 ```
