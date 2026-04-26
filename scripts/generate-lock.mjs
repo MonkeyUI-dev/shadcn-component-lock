@@ -56,11 +56,30 @@ function runShadcnInfo({ runner, cwd }) {
     const start = out.indexOf("{");
     const end = out.lastIndexOf("}");
     if (start === -1 || end === -1) throw new Error("no JSON in CLI output");
-    return JSON.parse(out.slice(start, end + 1));
+    return normalizeCtx(JSON.parse(out.slice(start, end + 1)));
   } catch (err) {
     console.error("[shadcn-component-lock] `shadcn info --json` failed:", err.message);
     return null;
   }
+}
+
+// shadcn 4.x nests config under `config` and project metadata under `project`.
+// shadcn 3.x exposed everything at the top level. Flatten to the 3.x shape so the
+// rest of the script stays version-agnostic.
+function normalizeCtx(raw) {
+  if (!raw || typeof raw !== "object") return raw;
+  const cfg = raw.config && typeof raw.config === "object" ? raw.config : {};
+  const project = raw.project && typeof raw.project === "object" ? raw.project : {};
+  return {
+    ...raw,
+    resolvedPaths: raw.resolvedPaths ?? cfg.resolvedPaths ?? {},
+    aliases: raw.aliases ?? cfg.aliases ?? {},
+    style: raw.style ?? cfg.style ?? null,
+    base: raw.base ?? cfg.base ?? null,
+    iconLibrary: raw.iconLibrary ?? cfg.iconLibrary ?? null,
+    tailwindVersion: raw.tailwindVersion ?? project.tailwindVersion ?? cfg.tailwindVersion ?? null,
+    components: raw.components ?? cfg.components ?? null,
+  };
 }
 
 function fallbackContext(cwd) {
