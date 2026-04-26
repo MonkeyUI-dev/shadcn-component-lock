@@ -103,7 +103,7 @@ The script:
 2. Reads `resolvedPaths.ui` and lists its files.
 3. Writes `shadcn-component-lock.md` **inside that UI directory**, using the layout in [assets/lock-template.md](assets/lock-template.md). File-path links in the table are emitted relative to the lockfile so they resolve from any viewer.
 4. Maps each entry to its canonical doc URL `https://ui.shadcn.com/docs/components/<name>`.
-5. Updates `AGENTS.md` at the project root (creates it if missing) with a short managed section pointing to the lockfile. The section is delimited by a hidden marker comment (`<!-- shadcn-component-lock:pointer -->`) so subsequent runs replace just that block and never clobber other agent rules.
+5. Updates the project's agent-rules manifest with a short managed section pointing to the lockfile. The target file is auto-detected: any of `AGENTS.md` / `CLAUDE.md` that already exist at the project root are updated; if none exist, `AGENTS.md` is created as the default. The managed section is delimited by a hidden marker comment (`<!-- shadcn-component-lock:pointer -->`) so subsequent runs replace just that block and never clobber other agent rules.
 
 If the developer prefers a different location, pass `--out <path>`:
 
@@ -111,13 +111,18 @@ If the developer prefers a different location, pass `--out <path>`:
 node scripts/generate-lock.mjs --out shadcn-component-lock.md   # back to project root
 ```
 
-To skip the AGENTS.md update, pass `--no-agents`.
+To skip the agent-rules update, pass `--no-agents`. To target specific file(s) explicitly (e.g. when both `AGENTS.md` and `CLAUDE.md` exist but you only want one updated, or to write into a non-standard path):
+
+```bash
+node scripts/generate-lock.mjs --agents-file CLAUDE.md
+node scripts/generate-lock.mjs --agents-file AGENTS.md --agents-file CLAUDE.md
+```
 
 ### 3. Surface the rule to other agents
 
-The script automatically maintains a `## shadcn primitives are locked` section in `AGENTS.md` at the project root (the de-facto standard manifest read by Cursor, Codex, Claude Code, Copilot, etc.). The section is wrapped by a hidden marker so re-runs replace just that block and leave the rest of `AGENTS.md` untouched. If `AGENTS.md` doesn't exist, the script creates it with a minimal header.
+The script automatically maintains a `## shadcn primitives are locked` section in the project's agent-rules manifest. It prefers files that already exist (`AGENTS.md` or `CLAUDE.md`) — both are updated when both are present — and falls back to creating `AGENTS.md` only when neither exists. The section is wrapped by a hidden marker so re-runs replace just that block and leave the rest untouched.
 
-For projects that use additional convention files (`.cursorrules`, `.github/copilot-instructions.md`, `CLAUDE.md`, `.windsurfrules`), ask the developer if they want the same one-line pointer appended there too — never write into those without consent.
+For projects that use additional convention files (`.cursorrules`, `.github/copilot-instructions.md`, `.windsurfrules`), ask the developer if they want the same one-line pointer added there too — either by passing `--agents-file <path>` or by editing those files manually. Never write into them without consent.
 
 ### 4. Passive refresh after `shadcn add`
 
@@ -149,7 +154,7 @@ The generated `shadcn-component-lock.md` MUST contain, in order:
 4. A short "How to change a primitive" section pointing to the official `shadcn` smart-merge flow.
 5. (Optional) A "Locally Modified" section listing diverged files.
 
-The AGENTS.md managed block MUST be delimited by `<!-- shadcn-component-lock:pointer -->` so it is idempotent and easy to detect.
+The agent-rules managed block (in `AGENTS.md` and/or `CLAUDE.md`) MUST be delimited by `<!-- shadcn-component-lock:pointer -->` so it is idempotent and easy to detect.
 
 See [references/LOCK_FORMAT.md](references/LOCK_FORMAT.md) for the exact schema and an example.
 

@@ -14,7 +14,11 @@
 //   node scripts/generate-lock.mjs --runner pnpm  # use `pnpm dlx shadcn@latest`
 //   node scripts/generate-lock.mjs --check        # exit 1 if lockfile is stale
 //   node scripts/generate-lock.mjs --dry-run      # print to stdout, do not write
-//   node scripts/generate-lock.mjs --no-agents    # skip updating AGENTS.md
+//   node scripts/generate-lock.mjs --no-agents    # skip updating agent-rules files
+//   node scripts/generate-lock.mjs --agents-file PATH [--agents-file PATH2 ...]
+//                                                 # write the pointer to specific file(s)
+//                                                 # default: auto-detect AGENTS.md / CLAUDE.md;
+//                                                 # if neither exists, create AGENTS.md.
 
 import { execFileSync } from "node:child_process";
 import { readFileSync, writeFileSync, readdirSync, existsSync, statSync } from "node:fs";
@@ -28,9 +32,12 @@ const SKILL_VERSION = "0.1.0";
 const DOCS_BASE = "https://ui.shadcn.com/docs/components";
 const LOCK_FILENAME = "shadcn-component-lock.md";
 const AGENTS_MARKER = "<!-- shadcn-component-lock:pointer -->";
+// Files we auto-detect, in priority order. Any that already exist will be updated.
+// If none exist, the first one is created as the default.
+const KNOWN_AGENT_FILES = ["AGENTS.md", "CLAUDE.md"];
 
 function parseArgs(argv) {
-  const args = { out: null, cwd: process.cwd(), runner: "npx", check: false, dryRun: false, agents: true };
+  const args = { out: null, cwd: process.cwd(), runner: "npx", check: false, dryRun: false, agents: true, agentsFiles: [] };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
     if (a === "--out") args.out = argv[++i];
@@ -39,12 +46,27 @@ function parseArgs(argv) {
     else if (a === "--check") args.check = true;
     else if (a === "--dry-run") args.dryRun = true;
     else if (a === "--no-agents") args.agents = false;
+    else if (a === "--agents-file") args.agentsFiles.push(argv[++i]);
     else if (a === "-h" || a === "--help") {
-      console.log("Usage: node generate-lock.mjs [--out PATH] [--cwd DIR] [--runner npx|pnpm|bun] [--check] [--dry-run] [--no-agents]");
+      console.log("Usage: node generate-lock.mjs [--out PATH] [--cwd DIR] [--runner npx|pnpm|bun] [--check] [--dry-run] [--no-agents] [--agents-file PATH ...]");
       process.exit(0);
     }
   }
   return args;
+}
+
+// Pick which agent-rules file(s) to update. Honors --agents-file overrides;
+// otherwise updates every known file that exists, falling back to creating
+// the first known file (AGENTS.md) when none exist.
+function resolveAgentsTargets({ cwd, overrides }) {
+  if (overrides && overrides.length) {
+    return overrides.map((p) => resolve(cwd, p));
+  }
+  const existing = KNOWN_AGENT_FILES
+    .map((name) => join(cwd, name))
+    .filter((p) => existsSync(p));
+  if (existing.length) return existing;
+  return [join(cwd, KNOWN_AGENT_FILES[0])];
 }
 
 function runShadcnInfo({ runner, cwd }) {
@@ -157,9 +179,9 @@ function render({ ctx, files, cwd, outPath, fallbackUsed }) {
     .replace("{{COUNT}}", String(rows.length));
 }
 
-function updateAgentsFile({ cwd, outPath, uiPathRel }) {
-  const agentsPath = join(cwd, "AGENTS.md");
+function updateAgentsFile({ cwd, outPath, uiPathRel, agentsPath }) {
   const lockRel = (relative(cwd, outPath) || LOCK_FILENAME).split("\\").join("/");
+  const fileLabel = basename(agentsPath);
   const block = [
     "",
     "## shadcn primitives are locked",
@@ -175,7 +197,7 @@ function updateAgentsFile({ cwd, outPath, uiPathRel }) {
   ].join("\n");
 
   if (!existsSync(agentsPath)) {
-    const header = `# AGENTS.md\n\nGuidance for AI coding agents working in this repository.\n`;
+    const header = `# ${fileLabel}\n\nGuidance for AI coding agents working in this repository.\n`;
     writeFileSync(agentsPath, header + block);
     return { path: agentsPath, action: "created" };
   }
@@ -183,7 +205,8 @@ function updateAgentsFile({ cwd, outPath, uiPathRel }) {
   const current = readFileSync(agentsPath, "utf8");
   if (current.includes(AGENTS_MARKER)) {
     // Replace the existing managed section so the lockfile path / ui dir stay in sync.
-    const re = /\n## shadcn primitives are locked[\s\S]*?_This section is maintained by the \[`shadcn-component-lock`\][^\n]*_\n/m;
+    // Anchor on the hidden marker + the closing italic line that the block always ends with.
+    const re = /\n?## shadcn primitives are locked\n[\s\S]*?_This section is maintained by the `shadcn-component-lock`[^\n]*_\n/m;
     if (re.test(current)) {
       writeFileSync(agentsPath, current.replace(re, block));
       return { path: agentsPath, action: "updated" };
@@ -244,8 +267,11 @@ function main() {
 
   if (args.agents) {
     const uiPathRel = (relative(cwd, uiPath) || ".").split("\\").join("/");
-    const result = updateAgentsFile({ cwd, outPath, uiPathRel });
-    console.log(`[shadcn-component-lock] ${result.action} ${relative(cwd, result.path)}`);
+    const targets = resolveAgentsTargets({ cwd, overrides: args.agentsFiles });
+    for (const agentsPath of targets) {
+      const result = updateAgentsFile({ cwd, outPath, uiPathRel, agentsPath });
+      console.log(`[shadcn-component-lock] ${result.action} ${relative(cwd, result.path)}`);
+    }
   }
 }
 
