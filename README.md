@@ -38,10 +38,10 @@ Two files, both auto-located via `npx shadcn@latest info --json` (never hardcode
 
 ```
 <resolvedPaths.ui>/shadcn-component-lock.md   # e.g. components/ui/shadcn-component-lock.md
-AGENTS.md                                     # project root, with a managed section
+AGENTS.md or CLAUDE.md                        # project root, with a managed section
 ```
 
-The `AGENTS.md` block is wrapped in `<!-- shadcn-component-lock:pointer -->`, so re-runs replace just that section and never touch the rest of your agent rules.
+The agent-rules target is auto-detected: any of `AGENTS.md` / `CLAUDE.md` that already exist at the project root get the managed section (both are updated when both are present). If neither exists, `AGENTS.md` is created as the default. The block is wrapped in `<!-- shadcn-component-lock:pointer -->`, so re-runs replace just that section and never touch the rest of your agent rules.
 
 The lockfile contains:
 
@@ -61,7 +61,8 @@ Exact schema: [references/LOCK_FORMAT.md](references/LOCK_FORMAT.md).
 | `--runner npx\|pnpm\|bun` | Pick the package runner used to call `shadcn@latest`. |
 | `--check` | Exit non-zero if the lockfile is stale. Wire this into CI. |
 | `--dry-run` | Print the file to stdout instead of writing. |
-| `--no-agents` | Skip the `AGENTS.md` update. |
+| `--no-agents` | Skip the agent-rules file update entirely. |
+| `--agents-file PATH` | Write the pointer to a specific file (repeat the flag for multiple targets). Overrides auto-detection. |
 
 ## When it runs
 

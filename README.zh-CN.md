@@ -38,10 +38,10 @@ node /path/to/shadcn-component-lock/scripts/generate-lock.mjs
 
 ```
 <resolvedPaths.ui>/shadcn-component-lock.md   # 例如 components/ui/shadcn-component-lock.md
-AGENTS.md                                     # 项目根,带一段托管区块
+AGENTS.md 或 CLAUDE.md                        # 项目根,带一段托管区块
 ```
 
-`AGENTS.md` 中的区块用 `<!-- shadcn-component-lock:pointer -->` 包裹,重跑只替换该块,不会动你已有的 agent 规则。
+Agent 规则文件会自动探测:项目根下已有的 `AGENTS.md` / `CLAUDE.md` 都会被写入托管区块(两个都存在则两个都更新);若都不存在,则默认创建 `AGENTS.md`。该区块用 `<!-- shadcn-component-lock:pointer -->` 包裹,重跑只替换该块,不会动你已有的 agent 规则。
 
 Lockfile 内容包括:
 
@@ -61,7 +61,8 @@ Lockfile 内容包括:
 | `--runner npx\|pnpm\|bun` | 选择调用 `shadcn@latest` 的包运行器。 |
 | `--check` | lockfile 已过期时非零退出,适合接入 CI。 |
 | `--dry-run` | 只打印到 stdout,不写文件。 |
-| `--no-agents` | 跳过 `AGENTS.md` 更新。 |
+| `--no-agents` | 跳过 agent 规则文件的更新。 |
+| `--agents-file PATH` | 显式指定要写入的文件(可重复传入多个),会覆盖自动探测。 |
 
 ## 何时运行
 
